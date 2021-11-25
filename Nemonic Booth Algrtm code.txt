@@ -1,0 +1,157 @@
+INIT_LOOP:	MOV ACC, CTE		#Move pointer of Q to ACC											
+			Q																					
+			MOV DPTR, ACC		#Move pointer of Q to DPTR
+			MOV ACC, [DPTR]		#Move value of Q to ACC
+			MOV A, ACC			#Move value of Q to A
+			MOV ACC, CTE		#Move -1 to ACC
+			00000001 			#0
+			AND ACC, A			#ACC = Q AND 0
+			MOV A, ACC
+			MOV ACC, CTE
+			11111111
+			ADD ACC, A
+			JZ CTE				#If ACC = 0 jump to define Q0,Q-1 = 00
+			def_ev10
+def_ev00:   MOV ACC, CTE		#Q0,Q-1 = 00
+			00000000
+			MOV A, ACC			#Move Q0,Q-1 to A
+			JMP CTE				#Jump to add_q
+			add_q
+def_ev10:	MOV ACC, CTE		#Q0,Q-1 = 10
+			00000010
+			MOV A, ACC			#Move Q0,Q-1 to A
+add_q:		MOV ACC, CTE		#Move pointer of Q-1 to AA
+			Q-1
+			MOV DPTR, ACC		#Move pointer of Q-1 to DPTR
+			MOV ACC, [DPTR]		#Move value of Q-1 to ACC
+			ADD ACC, A			#ACC = Q0,Q-1 + Q-1
+ev_op:		JP CTE				#If parity (10 or 01) proceed to do the operations
+			ev_01
+			JMP CTE				#Else shift
+			SHIFT
+ev_01:		MOV A, ACC			#Move Q0,Q-1 to A
+			MOV ACC, CTE		#Move -1 to ACC
+			11111111			#-1
+			ADD ACC, A			#ACC = -1 + Q0,Q-1
+			JZ CTE 				#If ACC = 0 means that Q0,Q-1 = 01, else Q0,Q-1 = 10
+			case_2
+case_1:		MOV ACC, CTE		#Move pointer of M to ACC
+			M					
+			MOV DPTR, ACC		#Move pointer of M to DPTR
+			MOV ACC, [DPTR]		#Move value of M to ACC
+			NEG ACC				#ACC = -M (A2)
+			JMP CTE				#Jump to define A
+			define_a
+case_2:		MOV ACC, CTE		#Move pointer of M to DPTR
+			M
+			MOV DPTR, ACC		#Move pointer of M to ACC
+			MOV ACC, [DPTR]		#Move value of M to ACC
+define_a:	MOV A, ACC			#Move M or -M (depending the case) to A
+			MOV ACC CTE			#Move pointer of Am to ACC
+			Am
+			MOV DPTR, ACC		#Move pointer of Am to DPTR
+			MOV ACC, [DPTR]		#Move value of Am to ACC
+			ADD ACC, A			#ACC = A - M (case 1) or A + M (case 2)
+			MOV [DPTR], ACC		#Save value of ACC in Am (in memory)
+SHIFT:		MOV ACC, CTE		#Move pointer of Q to ACC											
+			Q																					
+			MOV DPTR, ACC		#Move pointer of Q to DPTR
+			MOV ACC, [DPTR]		#Move value of Q to ACC
+			MOV A, ACC			#Move value of Q to A
+			MOV ACC, CTE		#Move 1 to ACC
+			00000001 			#1
+			AND ACC, A			#ACC = Q AND 0
+			MOV A, ACC
+			MOV ACC, CTE
+			11111111
+			ADD ACC, A
+			JZ CTE				#If ACC = 0 jump to define Q0,Q-1 = 00
+			q-1_1
+q-1_0:		MOV ACC, CTE		#Move pointer of Q-1 to ACC
+			Q-1					
+			MOV DPTR, ACC		#Move pointer of Q-1 to DPTR
+			MOV ACC, CTE		#Move 0 to ACC
+			00000000
+			MOV [DPTR], ACC		#Move 0 to Q (in memory)
+			JMP CTE 				#Jump to shift Q
+			shift_q
+q-1_1:		MOV ACC, CTE		#Move pointer of Q-1 to ACC
+			Q-1
+			MOV DPTR, ACC		#Move pointer of Q-1 to DPTR
+			MOV ACC, CTE		#Move 1 to ACC
+			00000001
+			MOV [DPTR], ACC		#Move 1 to Q (in memory)
+shift_q:	MOV ACC, CTE		#Move pointer of Am to ACC											
+			Am																					
+			MOV DPTR, ACC		#Move pointer of Am to DPTR
+			MOV ACC, [DPTR]		#Move value of Am to ACC
+			MOV A, ACC			#Move value of Am to A
+			MOV ACC, CTE		#Move 1 to ACC
+			00000001 			#0
+			AND ACC, A			#ACC = Am AND 1
+			MOV A, ACC
+			MOV ACC, CTE
+			11111111
+			ADD ACC, A
+			JZ CTE				#If ACC = 0 jump to define Q0,Q-1 = 00
+			q_1
+q_0:		MOV ACC, CTE		#Move 0 to ACC to define Q with MSB = 0
+			00000000
+			JMP CTE				#Jump to define Q
+			def_q
+q_1:		MOV ACC, CTE		#Move 10000000 to ACC to define Q with MSB = 1
+			10000000
+def_q:		MOV A, ACC			#Move 000000000 or 10000000 to A
+			MOV ACC, CTE		#Move pointer of Q to ACC
+			Q
+			MOV DPTR, ACC		#Move pointer of Q to DPTR
+			MOV ACC,[DPTR]		#Move value of Q to ACC
+			SLR ACC				#Shift logical right Q
+			ADD ACC, A			#Add the MSB to Q
+			MOV [DPTR], ACC		#Move ACC to Q (in memory)
+shift_a:	MOV ACC, CTE		#Move pointer of Am to ACC
+			Am
+			MOV DPTR, ACC		#Move pointer of Am to DPTR
+			MOV ACC, [DPTR]		#Move value of Am to ACC
+			MOV A, ACC
+			JN CTE				#If negative (MSB = 1) define de next MSB 1 too
+			a_1
+a_0:		MOV ACC, CTE		#Move 0 (next MSB) to ACC
+			00000000
+			JMP CTE				#Jump to define a
+			def_a
+a_1:		MOV ACC, CTE		#Move 10000000 (next MSB) to ACC
+			10000000
+def_a:		MOV A, ACC			#Move 0000000 or 10000000 to A
+			MOV ACC, [DPTR]		#Move value of A to ACC
+			SLR ACC				#Shift logical right Am
+			ADD ACC, A			#Add the MSB to Am
+			MOV [DPTR], ACC		#Move ACC to Am (in memory)
+init_cnt:	MOV ACC, CTE		#Move pointer of counter to ACC
+			count				
+			MOV DPTR, ACC		#Move pointer of counter to DPTR
+			MOV ACC, [DPTR]		#Move value of counter to ACC
+			MOV A, ACC			#Move value of counter to A
+			MOV ACC, CTE		#Move -1 to ACC
+			11111111
+			ADD ACC, A			#ACC = counter - 1
+			MOV [DPTR], ACC		#Save value of ACC(counter -1) in counter (in memory)
+loop_test:	JZ CTE				#If counter = 0 end loop
+			END_LOOP
+			JMP CTE				#Restart the loop
+			INIT_LOOP
+END_LOOP:	MOV ACC, CTE
+			Am
+			MOV DPTR, ACC
+			MOV ACC, [DPTR]
+			MOV A, ACC
+			MOV ACC, CTE
+			Q
+			MOV DPTR, ACC
+			MOV ACC, [DPTR]
+			HALT
+Am: 	00000000 #0
+Q-1:	00000000 #0
+M:		00000011 #Multiplicand
+Q:		11001100 #Multiplier
+count:	00001000 #8
