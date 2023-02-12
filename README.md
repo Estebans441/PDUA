@@ -1,7 +1,7 @@
 # PDUA
 
 Realizado por:
-- [Esteban Salazar Arbelaez](https://github.com/Estebans441)
+- [Esteban Salazar Arbelaez](https://github.com/Estebans441) 👨‍💻
 - Jose Tomas Suarez Acero
 
 El siguiente proyecto es la implementación de un algoritmo de multiplicación binaria con signo en el procesador PDUA.
